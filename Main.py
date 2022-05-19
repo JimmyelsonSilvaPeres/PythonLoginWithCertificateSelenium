@@ -20,8 +20,8 @@ if __name__ == "__main__":
     stringValueName = '1'
 
     certificate = GetCertificate("C:\Certificados\\45985371000108_000001010131997.pfx", 'br018726')
-    subject = certificate.get_subject()
-    issuer = certificate.get_issuer()
+    subject = certificate.subject()
+    issuer = certificate.issuer()
     url_where_certificate_will_be_send = "https://notacarioca.rio.gov.br/"
     url = 'https://notacarioca.rio.gov.br/senhaweb/login.aspx'
     
