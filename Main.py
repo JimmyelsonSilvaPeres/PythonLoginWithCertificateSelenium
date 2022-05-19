@@ -1,5 +1,6 @@
 import winreg
-from OpenSSL import crypto
+from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography.x509.oid import NameOID
 from selenium import webdriver
 
 def UpdateStringValue(strigValueName,newValueOfStrinValue, stringValuePath):
@@ -9,9 +10,10 @@ def UpdateStringValue(strigValueName,newValueOfStrinValue, stringValuePath):
 
 
 def GetCertificate(pathOfCertificate, passwordOfCertifcate):
-    pkcs12 = crypto.load_pkcs12(open(pathOfCertificate, 'rb').read(), passwordOfCertifcate)   
-    return pkcs12.get_certificate()
-
+    with open(pathOfCertificate,'rb') as f:
+      private_key,certificado,additional_certificates = pkcs12.load_key_and_certificates(f.read(), bytes(passwordOfCertifcate,encoding='utf-8'))
+    
+    return certificado
 
 if __name__ == "__main__":
     pathOfstringValue = 'SOFTWARE\Policies\Google\Chrome\AutoSelectCertificateForUrls'
@@ -22,8 +24,18 @@ if __name__ == "__main__":
     issuer = certificate.get_issuer()
     url_where_certificate_will_be_send = "https://notacarioca.rio.gov.br/"
     url = 'https://notacarioca.rio.gov.br/senhaweb/login.aspx'
-    json = '{"pattern":"' + url_where_certificate_will_be_send + '","filter":{"ISSUER":{"CN":"' + issuer.CN + '","C":"' + issuer.C + '","O":"' + issuer.O + '"},"SUBJECT":{"CN":"' + subject.CN + '","C":"' + subject.C + '","O":"' + subject.O + '"}}}'
+    
+    json = \
+    '{"pattern":"' + url_where_certificate_will_be_send + '", \
+    "filter":{"ISSUER":{"CN":"' + issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value + '", \
+    "C":"' + issuer.get_attributes_for_oid(NameOID.COUNTRY_NAME)[0].value + '",\
+    "O":"' + issuer.get_attributes_for_oid(NameOID.ORGANIZATION_NAME)[0].value  + '"},\
+    "SUBJECT":{"CN":"' + subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value + '",\
+    "C":"' + subject.get_attributes_for_oid(NameOID.COUNTRY_NAME)[0].value + '",\
+    "O":"' + subject.get_attributes_for_oid(NameOID.ORGANIZATION_NAME)[0].value + '"}}}'
+    
     UpdateStringValue(stringValueName, json, pathOfstringValue)
+    
     path = 'C:\\Users\\rodrigo.peres\Downloads\chromedriver_win32\\'
     driver = webdriver.Chrome()
 
